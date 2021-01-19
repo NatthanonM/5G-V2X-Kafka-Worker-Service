@@ -95,7 +95,7 @@ func (c *Consumer) consume(ctx context.Context) {
 				timeFormat:= t[0]+"T"+t[1]+"Z"
 				time, err := time.Parse(layout,timeFormat)
 				responseTime, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["response_time"]), 64)
-				workingHour := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]),64)
+				workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]),64)
 				if err != nil {
 					fmt.Println(err)
 				}
