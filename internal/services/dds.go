@@ -16,7 +16,7 @@ func NewDrowsinessService(crud *repositories.CRUDRepository) *DrowsinessService 
 	}
 }
 
-func (as *DrowsinessService) StoreData(username string,carID string,lat float64,lng float64,time time.Time,responseTime float64,workingHour string) error {
+func (as *DrowsinessService) StoreData(username string,carID string,lat float64,lng float64,time time.Time,responseTime float64,workingHour float64) error {
 	var drowsiness models.Drowsiness
 	drowsiness.Username = username
 	drowsiness.CarID = carID
