@@ -42,6 +42,9 @@ func (cn *Container) Configure() {
 	if err := cn.container.Provide(services.NewAccidentService); err != nil {
 		cn.Error = err
 	}
+	if err := cn.container.Provide(services.NewDrowsinessService); err != nil {
+		cn.Error = err
+	}
 
 	if err := cn.container.Provide(repositories.NewCRUDRepository); err != nil {
 		cn.Error = err
