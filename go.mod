@@ -1,4 +1,4 @@
-module 5g-v2x-kafka-worker-service
+module 5g-v2x-data-management-service
 
 go 1.15
 

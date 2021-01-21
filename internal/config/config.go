@@ -13,6 +13,8 @@ type Config struct {
 	GroupID        string `env:"GroupID" envDefault:"my-group"`
 	DatabaseURI    string `env:"DATABASE_URI,file" envDefault:"./env/database_uri"`
 	DatabaseName   string `env:"DATABASE_NAME,file" envDefault:"./env/database_name"`
+	UsernameKafka  string `env:"DATABASE_NAME,file" envDefault:"./env/username"`
+	PasswordKafka  string `env:"DATABASE_NAME,file" envDefault:"./env/password"`
 }
 
 // NewConfig ...
