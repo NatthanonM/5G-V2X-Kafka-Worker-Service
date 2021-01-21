@@ -13,6 +13,10 @@ type Config struct {
 	GroupID        string `env:"GroupID" envDefault:"my-group"`
 	// Declare Connection
 	DataManagementServiceConnection string `env:"DATA_MANAGEMENT_CONNECTION" envDefault:"127.0.0.1:8082"`
+	DatabaseURI                     string `env:"DATABASE_URI,file" envDefault:"./env/database_uri"`
+	DatabaseName                    string `env:"DATABASE_NAME,file" envDefault:"./env/database_name"`
+	UsernameKafka                   string `env:"DATABASE_NAME,file" envDefault:"./env/username"`
+	PasswordKafka                   string `env:"DATABASE_NAME,file" envDefault:"./env/password"`
 }
 
 // NewConfig ...

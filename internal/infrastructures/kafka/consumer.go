@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	//"github.com/segmentio/kafka-go/sasl/plain"
 )
 
 // Consumer ...
@@ -36,49 +37,61 @@ func (c *Consumer) consume(ctx context.Context) {
 	// initialize a new reader with the brokers and topic
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
+
+	//for sasl
+	// mechanism := plain.Mechanism{
+	// 	Username: c.config.UsernameKafka,
+	// 	Password: c.config.PasswordKafka,
+	// }
+	// dialer := &kafka.Dialer{
+	// 	Timeout:       10 * time.Second,
+	// 	DualStack:     true,
+	// 	SASLMechanism: mechanism,
+	// }
 	l := log.New(os.Stdout, "kafka reader: ", 0)
 	r_acc := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
 		Topic:   c.config.Topic,
 		Logger:  l,
+		//Dialer:         dialer,
 	})
 	r_dds := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
 		Topic:   c.config.TopicDDS,
 		Logger:  l,
+		//Dialer:         dialer,
 	})
 	layout := "2006-01-02T15:04:05.000000Z"
 	for {
 		// the `ReadMessage` method blocks until we receive the next event
-		msg, err := r_acc.ReadMessage(ctx)
-
-		if err != nil {
-			panic("could not read message1 " + err.Error())
-		}
-		// after receiving the message, log its value
-		if msg.Value != nil {
-			// var result_acc Accident
-			var result map[string]interface{}
-			json.Unmarshal([]byte(msg.Value), &result)
-
-			if result["condition"] == "ACS" {
-				//do something here
-				fmt.Println("ACS")
-				username := fmt.Sprintf("%v", result["username"])
-				carID := fmt.Sprintf("%v", result["carID"])
-				lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
-				lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
-				t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
-				timeFormat := t[0] + "T" + t[1] + "Z"
-				time, err := time.Parse(layout, timeFormat)
-				if err != nil {
-					fmt.Println(err)
-				}
-				go c.AccidentServices.StoreData(username, carID, lat, lng, time)
-
+		go func() {
+			msg, err := r_acc.ReadMessage(ctx)
+			if err != nil {
+				panic("could not read message1 " + err.Error())
 			}
-		}
+			if msg.Value != nil {
+				var result map[string]interface{}
+				json.Unmarshal([]byte(msg.Value), &result)
+
+				if result["condition"] == "ACS" {
+					fmt.Println("ACS")
+					username := fmt.Sprintf("%v", result["username"])
+					carID := fmt.Sprintf("%v", result["carID"])
+					lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
+					lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
+					t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
+					timeFormat := t[0] + "T" + t[1] + "Z"
+					time, err := time.Parse(layout, timeFormat)
+					if err != nil {
+						fmt.Println(err)
+					}
+					go c.AccidentServices.StoreData(username, carID, lat, lng, time)
+
+				}
+			}
+		}()
 		msg1, err1 := r_dds.ReadMessage(ctx)
+
 		if err1 != nil {
 			panic("could not read message2 " + err1.Error())
 		}
@@ -86,7 +99,7 @@ func (c *Consumer) consume(ctx context.Context) {
 			var result1 map[string]interface{}
 			json.Unmarshal([]byte(msg1.Value), &result1)
 			if result1["condition"] == "DDS" {
-				//do something here
+
 				fmt.Println("DDS")
 				username := fmt.Sprintf("%v", result1["username"])
 				carID := fmt.Sprintf("%v", result1["carID"])
