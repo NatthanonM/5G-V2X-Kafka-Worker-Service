@@ -1,31 +1,32 @@
 package kafka
 
 import (
+	"5g-v2x-kafka-worker-service/internal/config"
+	"5g-v2x-kafka-worker-service/internal/services"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"encoding/json"
-	"github.com/segmentio/kafka-go"
-	"5g-v2x-data-management-service/internal/config"
-	"5g-v2x-data-management-service/internal/services"
-	"time"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/segmentio/kafka-go"
 )
 
 // Consumer ...
 type Consumer struct {
-	config           *config.Config
-	AccidentServices *services.AccidentService
+	config             *config.Config
+	AccidentServices   *services.AccidentService
 	DrowsinessServices *services.DrowsinessService
 }
 
 // NewConsumer ...
 func NewConsumer(config *config.Config, as *services.AccidentService, ds *services.DrowsinessService) *Consumer {
 	c := &Consumer{
-		config:           config,
-		AccidentServices: as,
+		config:             config,
+		AccidentServices:   as,
 		DrowsinessServices: ds,
 	}
 	return c
@@ -50,7 +51,7 @@ func (c *Consumer) consume(ctx context.Context) {
 	for {
 		// the `ReadMessage` method blocks until we receive the next event
 		msg, err := r_acc.ReadMessage(ctx)
-		
+
 		if err != nil {
 			panic("could not read message1 " + err.Error())
 		}
@@ -59,22 +60,22 @@ func (c *Consumer) consume(ctx context.Context) {
 			// var result_acc Accident
 			var result map[string]interface{}
 			json.Unmarshal([]byte(msg.Value), &result)
-			
-			if  result["condition"] == "ACS" {
+
+			if result["condition"] == "ACS" {
 				//do something here
 				fmt.Println("ACS")
-				username :=  fmt.Sprintf("%v", result["username"])
+				username := fmt.Sprintf("%v", result["username"])
 				carID := fmt.Sprintf("%v", result["carID"])
-				lat,err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
-				lng,err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
+				lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
+				lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
 				t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
-				timeFormat:= t[0]+"T"+t[1]+"Z"
-				time, err := time.Parse(layout,timeFormat)
+				timeFormat := t[0] + "T" + t[1] + "Z"
+				time, err := time.Parse(layout, timeFormat)
 				if err != nil {
 					fmt.Println(err)
 				}
-				go c.AccidentServices.StoreData(username,carID,lat,lng,time)
-			
+				go c.AccidentServices.StoreData(username, carID, lat, lng, time)
+
 			}
 		}
 		msg1, err1 := r_dds.ReadMessage(ctx)
@@ -84,25 +85,25 @@ func (c *Consumer) consume(ctx context.Context) {
 		if msg1.Value != nil {
 			var result1 map[string]interface{}
 			json.Unmarshal([]byte(msg1.Value), &result1)
-			if  result1["condition"] == "DDS" {
+			if result1["condition"] == "DDS" {
 				//do something here
 				fmt.Println("DDS")
-				username :=  fmt.Sprintf("%v", result1["username"])
+				username := fmt.Sprintf("%v", result1["username"])
 				carID := fmt.Sprintf("%v", result1["carID"])
-				lat,err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lat"]), 64)
-				lng,err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lng"]), 64)
+				lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lat"]), 64)
+				lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lng"]), 64)
 				t := strings.Split(fmt.Sprintf("%v", result1["time"]), " ")
-				timeFormat:= t[0]+"T"+t[1]+"Z"
-				time, err := time.Parse(layout,timeFormat)
+				timeFormat := t[0] + "T" + t[1] + "Z"
+				time, err := time.Parse(layout, timeFormat)
 				responseTime, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["response_time"]), 64)
-				workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]),64)
+				workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]), 64)
 				if err != nil {
 					fmt.Println(err)
 				}
-				go c.DrowsinessServices.StoreData(username,carID,lat,lng,time,responseTime,workingHour)
-			
+				go c.DrowsinessServices.StoreData(username, carID, lat, lng, time, responseTime, workingHour)
+
 			}
-		}	
+		}
 	}
 }
 

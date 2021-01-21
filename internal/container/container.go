@@ -1,11 +1,11 @@
 package container
 
 import (
-	"5g-v2x-data-management-service/internal/config"
-	"5g-v2x-data-management-service/internal/infrastructures/database"
-	"5g-v2x-data-management-service/internal/infrastructures/kafka"
-	"5g-v2x-data-management-service/internal/repositories"
-	"5g-v2x-data-management-service/internal/services"
+	"5g-v2x-kafka-worker-service/internal/config"
+	"5g-v2x-kafka-worker-service/internal/infrastructures/grpc"
+	"5g-v2x-kafka-worker-service/internal/infrastructures/kafka"
+	"5g-v2x-kafka-worker-service/internal/repositories"
+	"5g-v2x-kafka-worker-service/internal/services"
 
 	"go.uber.org/dig"
 )
@@ -31,11 +31,11 @@ func (cn *Container) Configure() {
 		cn.Error = err
 	}
 
-	if err := cn.container.Provide(kafka.NewConsumer); err != nil {
+	if err := cn.container.Provide(grpc.NewGRPC); err != nil {
 		cn.Error = err
 	}
 
-	if err := cn.container.Provide(database.NewMongoDatabase); err != nil {
+	if err := cn.container.Provide(kafka.NewConsumer); err != nil {
 		cn.Error = err
 	}
 
@@ -46,7 +46,11 @@ func (cn *Container) Configure() {
 		cn.Error = err
 	}
 
-	if err := cn.container.Provide(repositories.NewCRUDRepository); err != nil {
+	if err := cn.container.Provide(repositories.NewAccidentRepository); err != nil {
+		cn.Error = err
+	}
+
+	if err := cn.container.Provide(repositories.NewDrowsinessRepository); err != nil {
 		cn.Error = err
 	}
 

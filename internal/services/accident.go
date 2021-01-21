@@ -1,33 +1,43 @@
 package services
 
 import (
-	"5g-v2x-data-management-service/internal/models"
-	"5g-v2x-data-management-service/internal/repositories"
+	"5g-v2x-kafka-worker-service/internal/repositories"
+	proto "5g-v2x-kafka-worker-service/pkg/api"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
 )
 
 type AccidentService struct {
-	crud *repositories.CRUDRepository
+	AccidentRepository *repositories.AccidentRepository
 }
 
-func NewAccidentService(crud *repositories.CRUDRepository) *AccidentService {
+func NewAccidentService(accidentRepository *repositories.AccidentRepository) *AccidentService {
 	return &AccidentService{
-		crud: crud,
+		AccidentRepository: accidentRepository,
 	}
 }
 
-func (as *AccidentService) StoreData(username string,carID string,lat float64,lng float64,time time.Time) error {
-	var accident models.Accident
-	accident.Username = username
-	accident.CarID = carID
-	accident.Latitude = lat
-	accident.Longitude = lng
-	accident.Time = time
-
-	_, err := as.crud.Create("accident", &accident)
+func (as *AccidentService) StoreData(username string, carID string, lat float64, lng float64, time time.Time) error {
+	protoTime, err := ptypes.TimestampProto(time)
 
 	if err != nil {
 		panic(err.Error())
 	}
+
+	accident := &proto.AccidentData{
+		Username:  username,
+		CarId:     carID,
+		Latitude:  lat,
+		Longitude: lng,
+		Time:      protoTime,
+	}
+
+	_, err = as.AccidentRepository.CreateAccidentData(accident)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
 	return nil
 }
