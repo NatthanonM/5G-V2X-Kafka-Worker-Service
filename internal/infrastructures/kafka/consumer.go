@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	//"github.com/segmentio/kafka-go/sasl/plain"
+	// "github.com/segmentio/kafka-go/sasl/plain"
 )
 
 // Consumer ...
@@ -53,71 +53,77 @@ func (c *Consumer) consume(ctx context.Context) {
 		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
 		Topic:   c.config.Topic,
 		Logger:  l,
-		//Dialer:         dialer,
+		// Dialer:         dialer,
 	})
 	r_dds := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
 		Topic:   c.config.TopicDDS,
 		Logger:  l,
-		//Dialer:         dialer,
+		// Dialer:         dialer,
 	})
 	layout := "2006-01-02T15:04:05.000000Z"
-	for {
+	
 		// the `ReadMessage` method blocks until we receive the next event
 		go func() {
-			msg, err := r_acc.ReadMessage(ctx)
-			if err != nil {
-				panic("could not read message1 " + err.Error())
-			}
-			if msg.Value != nil {
-				var result map[string]interface{}
-				json.Unmarshal([]byte(msg.Value), &result)
+			for {
+				msg, err := r_acc.ReadMessage(ctx)
+				if err != nil {
+					panic("could not read message1 " + err.Error())
+				}
+				if msg.Value != nil {
+					var result map[string]interface{}
+					json.Unmarshal([]byte(msg.Value), &result)
 
-				if result["condition"] == "ACS" {
-					fmt.Println("ACS")
-					username := fmt.Sprintf("%v", result["username"])
-					carID := fmt.Sprintf("%v", result["carID"])
-					lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
-					lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
-					t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
-					timeFormat := t[0] + "T" + t[1] + "Z"
-					time, err := time.Parse(layout, timeFormat)
-					if err != nil {
-						fmt.Println(err)
+					if result["condition"] == "ACS" {
+						fmt.Println("ACS")
+						username := fmt.Sprintf("%v", result["username"])
+						carID := fmt.Sprintf("%v", result["carID"])
+						lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
+						lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
+						t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
+						timeFormat := t[0] + "T" + t[1] + "Z"
+						time, err := time.Parse(layout, timeFormat)
+						if err != nil {
+							fmt.Println(err)
+						}
+						go c.AccidentServices.StoreData(username, carID, lat, lng, time)
+
 					}
-					go c.AccidentServices.StoreData(username, carID, lat, lng, time)
-
 				}
 			}
 		}()
-		msg1, err1 := r_dds.ReadMessage(ctx)
+		go func() {
+		for {
+			msg1, err1 := r_dds.ReadMessage(ctx)
 
-		if err1 != nil {
-			panic("could not read message2 " + err1.Error())
-		}
-		if msg1.Value != nil {
-			var result1 map[string]interface{}
-			json.Unmarshal([]byte(msg1.Value), &result1)
-			if result1["condition"] == "DDS" {
+			if err1 != nil {
+				panic("could not read message2 " + err1.Error())
+			}
+			if msg1.Value != nil {
+				var result1 map[string]interface{}
+				json.Unmarshal([]byte(msg1.Value), &result1)
+				if result1["condition"] == "DDS" {
 
-				fmt.Println("DDS")
-				username := fmt.Sprintf("%v", result1["username"])
-				carID := fmt.Sprintf("%v", result1["carID"])
-				lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lat"]), 64)
-				lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lng"]), 64)
-				t := strings.Split(fmt.Sprintf("%v", result1["time"]), " ")
-				timeFormat := t[0] + "T" + t[1] + "Z"
-				time, err := time.Parse(layout, timeFormat)
-				responseTime, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["response_time"]), 64)
-				workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]), 64)
-				if err != nil {
-					fmt.Println(err)
+					fmt.Println("DDS")
+					username := fmt.Sprintf("%v", result1["username"])
+					carID := fmt.Sprintf("%v", result1["carID"])
+					lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lat"]), 64)
+					lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lng"]), 64)
+					t := strings.Split(fmt.Sprintf("%v", result1["time"]), " ")
+					timeFormat := t[0] + "T" + t[1] + "Z"
+					time, err := time.Parse(layout, timeFormat)
+					responseTime, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["response_time"]), 64)
+					workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]), 64)
+					if err != nil {
+						fmt.Println(err)
+					}
+					go c.DrowsinessServices.StoreData(username, carID, lat, lng, time, responseTime, workingHour)
+
 				}
-				go c.DrowsinessServices.StoreData(username, carID, lat, lng, time, responseTime, workingHour)
-
 			}
 		}
-	}
+	}()
+	for{}
 }
 
 // Start ...
