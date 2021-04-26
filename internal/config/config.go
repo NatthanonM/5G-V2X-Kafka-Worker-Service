@@ -12,8 +12,8 @@ type Config struct {
 	GroupID        string `env:"GROUP_ID" envDefault:"my-group"`
 	// Declare Connection
 	DataManagementServiceConnection string `env:"DATA_MANAGEMENT_CONNECTION" envDefault:"127.0.0.1:8082"`
-	UsernameKafka                   string `env:"USERNAME_KAFKA,file" envDefault:"./env/username"`
-	PasswordKafka                   string `env:"PASSWORD_KAFKA,file" envDefault:"./env/password"`
+	UsernameKafka                   string `env:"USERNAME_KAFKA" envDefault:""`
+	PasswordKafka                   string `env:"PASSWORD_KAFKA" envDefault:""`
 }
 
 // NewConfig ...
