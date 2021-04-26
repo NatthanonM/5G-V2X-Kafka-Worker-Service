@@ -7,14 +7,11 @@ type Config struct {
 	Port           string `env:"PORT" envDefault:"18080"`
 	Topic          string `env:"TOPIC_ACCIDENT" envDefault:"kafka_accident"`
 	TopicDDS       string `env:"TOPIC_DROWSINESS" envDefault:"kafka_dds"`
-	Broker1Address string `env:"BROKER_1_ADDRESS" envDefault:"localhost:9092"`
-	Broker2Address string `env:"BROKER_2_ADDRESS" envDefault:"localhost:9093"`
-	Broker3Address string `env:"BROKER_3_ADDRESS" envDefault:"localhost:9094"`
+	Broker1Address string `env:"BROKER_1_ADDRESS" envDefault:"localhost:9093"`
+	Broker2Address string `env:"BROKER_2_ADDRESS" envDefault:"localhost:9094"`
 	GroupID        string `env:"GROUP_ID" envDefault:"my-group"`
 	// Declare Connection
 	DataManagementServiceConnection string `env:"DATA_MANAGEMENT_CONNECTION" envDefault:"127.0.0.1:8082"`
-	DatabaseURI                     string `env:"DATABASE_URI,file" envDefault:"./env/database_uri"`
-	DatabaseName                    string `env:"DATABASE_NAME,file" envDefault:"./env/database_name"`
 	UsernameKafka                   string `env:"USERNAME_KAFKA,file" envDefault:"./env/username"`
 	PasswordKafka                   string `env:"PASSWORD_KAFKA,file" envDefault:"./env/password"`
 }

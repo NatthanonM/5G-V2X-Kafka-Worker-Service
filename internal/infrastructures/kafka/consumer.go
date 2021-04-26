@@ -9,11 +9,11 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
+	// "strings"
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	// "github.com/segmentio/kafka-go/sasl/plain"
+    "github.com/segmentio/kafka-go/sasl/plain"
 )
 
 // Consumer ...
@@ -37,30 +37,33 @@ func (c *Consumer) consume(ctx context.Context) {
 	// initialize a new reader with the brokers and topic
 	// the groupID identifies the consumer and prevents
 	// it from receiving duplicate messages
-
+	startTime := time.Now()//.UTC().Format(time.RFC3339)
 	//for sasl
-	// mechanism := plain.Mechanism{
-	// 	Username: c.config.UsernameKafka,
-	// 	Password: c.config.PasswordKafka,
-	// }
-	// dialer := &kafka.Dialer{
-	// 	Timeout:       10 * time.Second,
-	// 	DualStack:     true,
-	// 	SASLMechanism: mechanism,
-	// }
+	mechanism := plain.Mechanism{
+		Username: c.config.UsernameKafka,
+		Password: c.config.PasswordKafka,
+	}
+	dialer := &kafka.Dialer{
+		Timeout:       10 * time.Second,
+		DualStack:     true,
+		SASLMechanism: mechanism,
+	}
 	l := log.New(os.Stdout, "kafka reader: ", 0)
 	r_acc := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
+		Brokers: []string{c.config.Broker1Address},
 		Topic:   c.config.Topic,
 		Logger:  l,
-		// Dialer:         dialer,
+		Dialer:         dialer,
 	})
 	r_dds := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{c.config.Broker1Address, c.config.Broker2Address, c.config.Broker3Address},
+		Brokers: []string{c.config.Broker1Address},
 		Topic:   c.config.TopicDDS,
 		Logger:  l,
-		// Dialer:         dialer,
+		Dialer:         dialer,
 	})
+
+	r_dds.SetOffsetAt(context.Background(), startTime)
+	r_acc.SetOffsetAt(context.Background(), startTime)
 	layout := "2006-01-02T15:04:05.000000Z"
 	
 		// the `ReadMessage` method blocks until we receive the next event
@@ -80,8 +83,9 @@ func (c *Consumer) consume(ctx context.Context) {
 						carID := fmt.Sprintf("%v", result["carID"])
 						lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lat"]), 64)
 						lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result["lng"]), 64)
-						t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
-						timeFormat := t[0] + "T" + t[1] + "Z"
+						timeFormat := fmt.Sprintf("%v", result["time"])
+						// t := strings.Split(fmt.Sprintf("%v", result["time"]), " ")
+						// timeFormat := t[0] + "T" + t[1] + "Z"
 						time, err := time.Parse(layout, timeFormat)
 						if err != nil {
 							fmt.Println(err)
@@ -109,8 +113,9 @@ func (c *Consumer) consume(ctx context.Context) {
 					carID := fmt.Sprintf("%v", result1["carID"])
 					lat, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lat"]), 64)
 					lng, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["lng"]), 64)
-					t := strings.Split(fmt.Sprintf("%v", result1["time"]), " ")
-					timeFormat := t[0] + "T" + t[1] + "Z"
+					timeFormat := fmt.Sprintf("%v", result1["time"])
+					// t := strings.Split(fmt.Sprintf("%v", result1["time"]), " ")
+					// timeFormat := t[0] + "T" + t[1] + "Z"
 					time, err := time.Parse(layout, timeFormat)
 					responseTime, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["response_time"]), 64)
 					workingHour, err := strconv.ParseFloat(fmt.Sprintf("%v", result1["working_time"]), 64)
